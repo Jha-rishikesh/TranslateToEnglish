@@ -49,6 +49,22 @@ for paragraph in doc.paragraphs:
     print("English:", translated_text)
     print("-" * 40)
 
+    ###################
+for table in doc.tables:
+   
+      for row in table.rows:
+   
+       for cell in row.cells:
+   
+          if cell.text.strip():
+   
+           translated = translator.translate(cell.text)
+   
+           cell.text = translated
+   
+           print("Table:", translated)
+
+
 doc.save(output_file)
 
 print("\nTranslation completed successfully")

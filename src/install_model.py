@@ -1,7 +1,15 @@
 import argostranslate.package
 
-package_path = "models/translate-fr_en-1_9.argosmodel"
+models = [
+    "models/translate-de_en-1_3.argosmodel",
+    "models/translate-es_en-1_9.argosmodel",
+    "models/translate-pt_en-1_9.argosmodel",
+    "models/translate-ja_en-1_1.argosmodel",
+    "models/translate-zh_en-1_9.argosmodel"
+]
 
-argostranslate.package.install_from_path(package_path)
+for model in models:
+    print(f"Installing: {model}")
+    argostranslate.package.install_from_path(model)
 
-print("French -> English model installed successfully")
+print("All models installed successfully!")
