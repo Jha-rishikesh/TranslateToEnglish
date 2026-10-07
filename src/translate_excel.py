@@ -25,6 +25,32 @@ os.environ["ARGOS_CHUNK_TYPE"] = "MINISBD"
 from openpyxl import load_workbook
 import argostranslate.translate
 
+def should_translate(text):
+
+    text = text.strip()
+
+    if not text:
+        return False
+
+    if len(text) <= 1:
+        return False
+
+    if text.isdigit():
+        return False
+
+    # Place names with Japanese markers
+    japanese_markers = [
+        "Ō", "ō", "chō",
+        "shi", "ku",
+        "aza", "miya"
+    ]
+
+    for marker in japanese_markers:
+        if marker in text:
+            return False
+
+    return True
+
 input_file = "input/DummyFrench.xlsx"
 output_file = "output/DummyFrench_English.xlsx"
 
@@ -58,6 +84,10 @@ for sheet in workbook.worksheets:
             if isinstance(cell.value, str):
 
                 original = cell.value
+
+                if not should_translate(original):
+                 continue
+
                 translated = translator.translate(original)
 
                 cell.value = translated
