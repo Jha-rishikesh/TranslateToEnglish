@@ -4,8 +4,8 @@ os.environ["ARGOS_CHUNK_TYPE"] = "MINISBD"
 from pptx import Presentation
 import argostranslate.translate
 
-def should_translate(text):
 
+def should_translate(text):
     text = text.strip()
 
     if not text:
@@ -17,7 +17,6 @@ def should_translate(text):
     if text.isdigit():
         return False
 
-    # Place names with Japanese markers
     japanese_markers = [
         "Ō", "ō", "chō",
         "shi", "ku",
@@ -31,163 +30,93 @@ def should_translate(text):
     return True
 
 
-input_file = "input/DummyFrench.pptx"
-output_file = "output/DummyFrench_English.pptx"
+def translate_ppt(
+    input_file,
+    output_file,
+    source_language,
+    target_language="en"
+):
+    installed_languages = (
+        argostranslate.translate.get_installed_languages()
+    )
 
-source_language = "fr"
-target_language = "en"
+    source = next(
+        lang for lang in installed_languages
+        if lang.code == source_language
+    )
 
-installed_languages = argostranslate.translate.get_installed_languages()
+    target = next(
+        lang for lang in installed_languages
+        if lang.code == target_language
+    )
 
-source = next(
-    lang for lang in installed_languages
-    if lang.code == source_language
-)
+    translator = source.get_translation(target)
 
-target = next(
-    lang for lang in installed_languages
-    if lang.code == target_language
-)
+    ppt = Presentation(input_file)
 
-translator = source.get_translation(target)
+    for slide_number, slide in enumerate(ppt.slides, start=1):
+        print("\nSlide:", slide_number)
 
-ppt = Presentation(input_file)
+        for shape in slide.shapes:
 
-# for slide in ppt.slides:
+            # Translate normal text shapes
+            if shape.has_text_frame and not shape.has_table:
+                for paragraph in shape.text_frame.paragraphs:
+                    original_text = paragraph.text
 
-#     for shape in slide.shapes:
+                    if not should_translate(original_text):
+                        continue
 
-        # if hasattr(shape, "text"):
+                    translated_text = translator.translate(original_text)
 
-        #     if shape.text.strip():
+                    if paragraph.runs:
+                        paragraph.runs[0].text = translated_text
 
-        #         original = shape.text
-        #         translated = translator.translate(original)
+                        for run in paragraph.runs[1:]:
+                            run.text = ""
 
-        #         shape.text = translated
-
-        #         print(original)
-        #         print("↓")
-        #         print(translated)
-        #         print("-" * 40)
-
-        # if hasattr(shape, "text_frame"):
-        
-
-        #  for paragraph in shape.text_frame.paragraphs:
-        
-        #     if not paragraph.text.strip():
-        #         continue
-        
-        #     original = paragraph.text
-        #     translated = translator.translate(original)
-        
-        #     paragraph.runs[0].text = translated
-        
-        #     for run in paragraph.runs[1:]:
-        #         run.text = ""
-        
-        #     print(original)
-        #     print("↓")
-        #     print(translated)
-        #     print("-" * 40)
-        
-        # # Translate tables
-        # if shape.has_table:
-        
-        #     table = shape.table
-        
-        #     for row in table.rows:
-        
-        #         for cell in row.cells:
-        
-        #             if cell.text.strip():
-        
-        #                 translated = translator.translate(
-        #                     cell.text
-        #                 )
-        
-        #                 cell.text = translated
-        
-        #                 print("TABLE:")
-        #                 print(cell.text)    
-
-for slide in ppt.slides:
-
-    for shape in slide.shapes:
-
-        # TEXT SHAPES
-        if hasattr(shape, "text_frame"):
-
-            for paragraph in shape.text_frame.paragraphs:
-
-                if not paragraph.text.strip():
-                    continue
-
-                original = paragraph.text
-                if not should_translate(original):
-                  continue
-                translated = translator.translate(original)
-
-                paragraph.runs[0].text = translated
-
-                for run in paragraph.runs[1:]:
-                    run.text = ""
-
-                    print(original)
-                    print("↓")
-                    print(translated)
+                    print(original_text)
+                    print("->", translated_text)
                     print("-" * 40)
 
-        # TABLES
-        # if shape.has_table:
+            # Translate tables while preserving formatting
+            if shape.has_table:
+                table = shape.table
 
-        #     table = shape.table
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.text_frame.paragraphs:
+                            original_text = paragraph.text
 
-        #     for row in table.rows:
+                            if not should_translate(original_text):
+                                continue
 
-        #         for cell in row.cells:
+                            translated_text = translator.translate(
+                                original_text
+                            )
 
-        #             if cell.text.strip():
+                            if paragraph.runs:
+                                paragraph.runs[0].text = translated_text
 
-        #                 translated = translator.translate(
-        #                     cell.text
-        #                 )
+                                for run in paragraph.runs[1:]:
+                                    run.text = ""
 
-        #                 # cell.text = translated
+                            print(
+                                "Table:",
+                                original_text,
+                                "->",
+                                translated_text
+                            )
 
-        #                 print("TABLE:")
-        #                 print(cell.text)
-        # Translate tables while preserving text formatting
-        if shape.has_table:
-        
-            table = shape.table
-        
-            for row in table.rows:
-        
-                for cell in row.cells:
-        
-                    for paragraph in cell.text_frame.paragraphs:
-        
-                        if not paragraph.text.strip():
-                            continue
-        
-                        original = paragraph.text
-                        if not should_translate(original):
-                         continue
-                        translated = translator.translate(original)
-        
-                        if paragraph.runs:
-                            paragraph.runs[0].text = translated
-        
-                            for run in paragraph.runs[1:]:
-                                run.text = ""
-        
-                        print("TABLE:")
-                        print(original)
-                        print("↓")
-                        print(translated)
+    ppt.save(output_file)
 
-ppt.save(output_file)
+    print("\nPPT translation completed")
+    print("Output:", output_file)
 
-print("Translation Completed!")
+if __name__ == "__main__":
+    
+    translate_ppt(
+      "input/DummyFrench.pptx",
+      "output/DummyFrench_English.pptx",
+      "fr"
+    )

@@ -1,32 +1,11 @@
-# from openpyxl import load_workbook
-
-# input_file = "input/DummyFrench.xlsx"
-# output_file = "output/DummyFrench_English.xlsx"
-
-# workbook = load_workbook(input_file)
-
-# for sheet in workbook.worksheets:
-
-#     for row in sheet.iter_rows():
-
-#         for cell in row:
-
-#             if isinstance(cell.value, str):
-
-#                 print(cell.coordinate, "=", cell.value)
-
-# workbook.save(output_file)
-
-# print("Excel processed successfully")
-
 import os
 os.environ["ARGOS_CHUNK_TYPE"] = "MINISBD"
 
 from openpyxl import load_workbook
 import argostranslate.translate
 
-def should_translate(text):
 
+def should_translate(text):
     text = text.strip()
 
     if not text:
@@ -38,7 +17,6 @@ def should_translate(text):
     if text.isdigit():
         return False
 
-    # Place names with Japanese markers
     japanese_markers = [
         "Ō", "ō", "chō",
         "shi", "ku",
@@ -51,53 +29,64 @@ def should_translate(text):
 
     return True
 
-input_file = "input/DummyFrench.xlsx"
-output_file = "output/DummyFrench_English.xlsx"
 
-source_language = "fr"
-target_language = "en"
+def translate_excel(
+    input_file,
+    output_file,
+    source_language,
+    target_language="en"
+):
+    installed_languages = (
+        argostranslate.translate.get_installed_languages()
+    )
 
-installed_languages = argostranslate.translate.get_installed_languages()
+    source = next(
+        lang for lang in installed_languages
+        if lang.code == source_language
+    )
 
-source = next(
-    lang for lang in installed_languages
-    if lang.code == source_language
-)
+    target = next(
+        lang for lang in installed_languages
+        if lang.code == target_language
+    )
 
-target = next(
-    lang for lang in installed_languages
-    if lang.code == target_language
-)
+    translator = source.get_translation(target)
 
-translator = source.get_translation(target)
+    workbook = load_workbook(input_file)
 
-workbook = load_workbook(input_file)
+    for sheet in workbook.worksheets:
+        print("\nSheet:", sheet.title)
 
-for sheet in workbook.worksheets:
+        for row in sheet.iter_rows():
+            for cell in row:
+                if not isinstance(cell.value, str):
+                    continue
 
-    print(f"\nSheet: {sheet.title}")
+                original_text = cell.value
 
-    for row in sheet.iter_rows():
+                if not should_translate(original_text):
+                    continue
 
-        for cell in row:
-
-            if isinstance(cell.value, str):
-
-                original = cell.value
-
-                if not should_translate(original):
-                 continue
-
-                translated = translator.translate(original)
-
-                cell.value = translated
+                translated_text = translator.translate(original_text)
+                cell.value = translated_text
 
                 print(
-                    f"{cell.coordinate}: "
-                    f"{original} -> {translated}"
+                    cell.coordinate,
+                    ":",
+                    original_text,
+                    "->",
+                    translated_text
                 )
 
-workbook.save(output_file)
+    workbook.save(output_file)
 
-print("\nTranslation Completed!")
-print(f"Output File: {output_file}")
+    print("\nExcel translation completed")
+    print("Output:", output_file)
+
+if __name__ == "__main__":
+    
+    translate_excel(
+      "input/DummyFrench.xlsx",
+      "output/DummyFrench_English.xlsx",
+      "fr"
+  )    

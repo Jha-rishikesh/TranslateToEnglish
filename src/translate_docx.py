@@ -4,8 +4,8 @@ os.environ["ARGOS_CHUNK_TYPE"] = "MINISBD"
 from docx import Document
 import argostranslate.translate
 
-def should_translate(text):
 
+def should_translate(text):
     text = text.strip()
 
     if not text:
@@ -17,7 +17,6 @@ def should_translate(text):
     if text.isdigit():
         return False
 
-    # Place names with Japanese markers
     japanese_markers = [
         "Ō", "ō", "chō",
         "shi", "ku",
@@ -31,90 +30,84 @@ def should_translate(text):
     return True
 
 
-input_file = "input/DummyFrench.docx"
-output_file = "output/DummyFrench_English_V2.docx"
+def translate_docx(
+    input_file,
+    output_file,
+    source_language,
+    target_language="en"
+):
+    installed_languages = (
+        argostranslate.translate.get_installed_languages()
+    )
 
-installed_languages = argostranslate.translate.get_installed_languages()
+    source = next(
+        lang for lang in installed_languages
+        if lang.code == source_language
+    )
 
-# french = next(lang for lang in installed_languages if lang.code == "fr")
-# english = next(lang for lang in installed_languages if lang.code == "en")
+    target = next(
+        lang for lang in installed_languages
+        if lang.code == target_language
+    )
 
-# translator = french.get_translation(english)
+    translator = source.get_translation(target)
 
-source_language = "fr"   # fr,de,es,pt,ja,zh
-target_language = "en"
+    doc = Document(input_file)
 
-source = next(
-    lang for lang in installed_languages
-    if lang.code == source_language
-)
+    # Translate normal paragraphs
+    for paragraph in doc.paragraphs:
+        original_text = paragraph.text
 
-target = next(
-    lang for lang in installed_languages
-    if lang.code == target_language
-)
-
-translator = source.get_translation(target)
-
-doc = Document(input_file)
-
-# for paragraph in doc.paragraphs:
-#     for run in paragraph.runs:
-
-#         if run.text.strip():
-#             original_text = run.text
-#             translated_text = translator.translate(original_text)
-
-#             run.text = translated_text
-
-#             print("French :", original_text)
-#             print("English:", translated_text)
-#             print("-" * 40)
-
-for paragraph in doc.paragraphs:
-
-    original_text = paragraph.text
-
-    if not original_text.strip():
-        continue
-
-    if not should_translate(original_text):
-        continue
-
-    translated_text = translator.translate(original_text)
-
-    # Translation ko first run me rakho
-    paragraph.runs[0].text = translated_text
-
-    # Baaki runs ka French text remove karo
-    for run in paragraph.runs[1:]:
-        run.text = ""
-
-    print("French :", original_text)
-    print("English:", translated_text)
-    print("-" * 40)
-
-    ###################
-for table in doc.tables:
-   
-      for row in table.rows:
-   
-       for cell in row.cells:
-   
-          if cell.text.strip():
-
-           if not should_translate(cell.text):
+        if not should_translate(original_text):
             continue
-   
-           translated = translator.translate(cell.text)
-   
-           cell.text = translated
-   
-           print("Table:", translated)
 
+        translated_text = translator.translate(original_text)
 
-doc.save(output_file)
+        if paragraph.runs:
+            paragraph.runs[0].text = translated_text
 
-print("\nTranslation completed successfully")
-print("Output:", output_file)
-########################
+            for run in paragraph.runs[1:]:
+                run.text = ""
+
+        print("Original:", original_text)
+        print("English :", translated_text)
+        print("-" * 40)
+
+    # Translate table cells
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                original_text = cell.text
+
+                if not should_translate(original_text):
+                    continue
+
+                translated_text = translator.translate(original_text)
+
+                # Preserve formatting using paragraph runs
+                for paragraph in cell.paragraphs:
+                    if not paragraph.text.strip():
+                        continue
+
+                    if paragraph.runs:
+                        paragraph.runs[0].text = translated_text
+
+                        for run in paragraph.runs[1:]:
+                            run.text = ""
+
+                    break
+
+                print("Table:", original_text, "->", translated_text)
+
+    doc.save(output_file)
+
+    print("\nDOCX translation completed")
+    print("Output:", output_file)
+
+    if __name__ == "__main__":
+
+      translate_docx(
+          "input/DummyFrench.docx",
+          "output/DummyFrench_English.docx",
+          "fr"
+      )
