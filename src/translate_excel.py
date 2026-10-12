@@ -83,10 +83,10 @@ def translate_excel(
     print("\nExcel translation completed")
     print("Output:", output_file)
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     
-    translate_excel(
-      "input/DummyFrench.xlsx",
-      "output/DummyFrench_English.xlsx",
-      "fr"
-  )    
+#     translate_excel(
+#       "input/DummyFrench.xlsx",
+#       "output/DummyFrench_English.xlsx",
+#       "fr"
+#   )    

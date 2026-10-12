@@ -113,10 +113,10 @@ def translate_ppt(
     print("\nPPT translation completed")
     print("Output:", output_file)
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     
-    translate_ppt(
-      "input/DummyFrench.pptx",
-      "output/DummyFrench_English.pptx",
-      "fr"
-    )
+#     translate_ppt(
+#       "input/DummyFrench.pptx",
+#       "output/DummyFrench_English.pptx",
+#       "fr"
+#     )

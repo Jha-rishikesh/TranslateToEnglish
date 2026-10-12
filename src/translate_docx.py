@@ -104,10 +104,10 @@ def translate_docx(
     print("\nDOCX translation completed")
     print("Output:", output_file)
 
-    if __name__ == "__main__":
-
-      translate_docx(
-          "input/DummyFrench.docx",
-          "output/DummyFrench_English.docx",
-          "fr"
-      )
+# if __name__ == "__main__":
+    
+#     translate_docx(
+#       "input/DummyFrench.docx",
+#       "output/DummyFrench_English.docx",
+#       "fr"
+#   )
